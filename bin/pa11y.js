@@ -18,8 +18,10 @@
 'use strict';
 
 var chalk = require('chalk');
+var glob = require('glob');
 var loadReporter = require('../lib/reporters').loadReporter;
 var pa11y = require('../lib/pa11y');
+var path = require('path');
 var pkg = require('../package.json');
 var program = require('commander');
 
@@ -30,11 +32,25 @@ function initProgram () {
 	program
 		.version(pkg.version)
 		.usage('[options] <url|html>')
-		.option('-s, --suite [name]', 'The name of a suite to use rules from')
-		.option('-r, --rules [rules]', 'A comma-separated list of rules to use', optionToArray)
 		.option('-i, --ignore [rules]', 'A comma-separated list of rules to ignore', optionToArray)
 		.option('-R, --reporter [reporter]', 'The name of a reporter to use', 'cli')
+		.option('-r, --rules [rules]', 'A comma-separated list of rules to use', optionToArray)
+		.option('-s, --suite [name]', 'The name of a suite to use rules from')
 		.option('-u, --useragent [ua]', 'The user-agent to send to the page being tested', null)
+		.on('--help', function () {
+			console.log('  Available suites:');
+			console.log();
+			getSuiteNames().forEach(function (suite) {
+				console.log('    ' + suite);
+			});
+			console.log();
+			console.log('  Available rules:');
+			console.log();
+			getRuleNames().forEach(function (rule) {
+				console.log('    ' + rule);
+			});
+			console.log();
+		})
 		.parse(process.argv);
 }
 
@@ -118,4 +134,32 @@ function reportError (err) {
 
 function isErrorResult (result) {
 	return (result.level === 'error');
+}
+
+function getSuiteNames () {
+	return glob.sync(__dirname + '/../suite/**.json')
+		.map(getSuiteNameFromPath)
+		.filter(filterSuiteNames);
+}
+
+function getSuiteNameFromPath (filePath) {
+	return path.basename(filePath, path.extname(filePath));
+}
+
+function filterSuiteNames (name) {
+	return (name !== 'test');
+}
+
+function getRuleNames () {
+	return glob.sync(__dirname + '/../rule/**/*.js')
+		.map(getRuleNameFromPath)
+		.filter(filterRuleNames);
+}
+
+function getRuleNameFromPath (filePath) {
+	return path.relative(__dirname + '/../rule/', filePath).replace(path.extname(filePath), '');
+}
+
+function filterRuleNames (name) {
+	return !/^test\//.test(name);
 }
