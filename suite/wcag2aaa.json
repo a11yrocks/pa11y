@@ -1,6 +1,8 @@
 {
 	"rules": [
-		"wcag/1.1.1-non-text-content"
+		"wcag/1.1.1/h30",
+		"wcag/1.1.1/h36",
+		"wcag/1.1.1/h37"
 	],
 	"config": {}
 }
